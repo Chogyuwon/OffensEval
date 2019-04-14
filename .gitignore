@@ -102,3 +102,15 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# .vscode
+.vscode
+
+# .ipynb_checkpoints
+.ipynb_checkpoints
+
+# save
+/save
+
+# submission
+/submission
