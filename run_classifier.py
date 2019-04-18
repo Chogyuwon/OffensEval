@@ -110,6 +110,90 @@ class DataProcessor(object):
                 lines.append(line)
             return lines
 
+    def _read_csv(cls, input_file, quotechar=None):
+        """Reads a comma separated value file."""
+        with open(input_file, "r") as f:
+            reader = csv.reader(f)
+            lines = []
+            for line in reader:
+                if sys.version_info[0] == 2:
+                    line = list(unicode(cell, 'utf-8') for cell in line)
+                lines.append(line)
+            return lines
+
+
+class trac1_Processor(DataProcessor):
+    def get_train_examples(self, data_dir):
+        """See base class."""
+        return self._create_train_examples(
+            self._read_csv(os.path.join(data_dir, "./english/agr_en_train.csv")), "train")
+
+    def get_dev_examples(self, data_dir):
+        """See base class."""
+        return self._create_dev_examples(
+            self._read_csv(os.path.join(data_dir, "./english/agr_en_dev.csv")), "dev")
+
+    def get_test_examples(self, data_dir, src):
+        """See base class."""
+        if src == "fb":
+            return self._create_test_examples(
+                self._read_csv(os.path.join(data_dir, "trac-test-package/agr_en_fb_test.csv")), "test")
+        elif src == "social":
+            return self._create_test_examples(
+                self._read_csv(os.path.join(data_dir, "trac-test-package/agr_en_sm_test")), "test")
+        else:
+            # this section is for merged fb, social data test
+            raise NotImplementedError()
+
+    def get_labels(self):
+        """See base class."""
+        return ["0", "1", "2"]
+
+    def _create_train_examples(self, lines, set_type):
+        """Creates examples for the training and dev sets."""
+        examples = []
+        for (i, line) in enumerate(lines):
+            guid = line[0]
+            text_a = line[1]
+            if line[2] == "NAG":
+                label = '0'
+            elif line[2] == "CAG":
+                label = '1'
+            else:
+                label = '2'
+            examples.append(
+                InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
+        return examples
+    
+    def _create_dev_examples(self, lines, set_type):
+        """Creates examples for the training and dev sets."""
+        examples = []
+        for (i, line) in enumerate(lines):
+            guid = line[0]
+            text_a = line[1]
+            if line[2] == "NAG":
+                label = '0'
+            elif line[2] == "CAG":
+                label = '1'
+            else:
+                label = '2'
+            examples.append(
+                InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
+        return examples
+
+    def _create_test_examples(self, lines, set_type):
+        """Creates examples for the training and dev sets."""
+        examples = []
+        for (i, line) in enumerate(lines):
+            try:
+                guid = line[0].split("msr_")[1]
+            except:
+                guid = line[0].split("sme_")[1]
+            text_a = line[1]
+            examples.append(
+                InputExample(guid=guid, text_a=text_a, text_b=None))
+        return examples
+
 
 class taskA_Processor(DataProcessor):
     def get_train_examples(self, data_dir):
@@ -263,8 +347,10 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
                 logger.info("label: %s (id = %d)" % (example.label, label_id))
             except:
                 pass
-
-        guid = int(example.guid)
+        try:
+            guid = int(example.guid)
+        except:
+            guid = example.guid
         features.append(
                 InputFeatures(input_ids=input_ids,
                               input_mask=input_mask,
@@ -294,9 +380,9 @@ def simple_accuracy(preds, labels):
     return (preds == labels).mean()
 
 
-def acc_and_f1(preds, labels):
+def acc_and_f1(preds, labels, average):
     acc = simple_accuracy(preds, labels)
-    f1 = f1_score(y_true=labels, y_pred=preds)
+    f1 = f1_score(y_true=labels, y_pred=preds, average=average)
     return {
         "acc": acc,
         "f1": f1,
@@ -306,6 +392,8 @@ def compute_metrics(task_name, preds, labels):
     assert len(preds) == len(labels)
     if task_name == "task_a":
         return acc_and_f1(preds, labels)
+    if task_name == "trac_1":
+        return acc_and_f1(preds, labels, "weighted")
     else:
         raise KeyError(task_name)
 
@@ -332,14 +420,13 @@ def main():
                         type=str,
                         required=True,
                         help="The output directory where the model predictions and checkpoints will be written.")
-
     ## Other parameters
     parser.add_argument("--cache_dir",
                         default="",
                         type=str,
                         help="Where do you want to store the pre-trained models downloaded from s3")
     parser.add_argument("--max_seq_length",
-                        default=80,
+                        default=60,
                         type=int,
                         help="The maximum total input sequence length after WordPiece tokenization. \n"
                              "Sequences longer than this will be truncated, and sequences shorter \n"
@@ -353,6 +440,10 @@ def main():
     parser.add_argument("--do_test",
                         action='store_true',
                         help="Whether to run eval on the test set.")
+    parser.add_argument("--test_src",
+                        default="",
+                        type=str,
+                        help="Test set src for trac-1 dataset, fb/social")   
     parser.add_argument("--do_lower_case",
                         action='store_true',
                         help="Set this flag if you are using an uncased model.")
@@ -361,11 +452,11 @@ def main():
                         type=int,
                         help="Total batch size for training.")
     parser.add_argument("--eval_batch_size",
-                        default=8,
+                        default=32,
                         type=int,
                         help="Total batch size for eval.")
     parser.add_argument("--test_batch_size",
-                        default=20,
+                        default=32,
                         type=int,
                         help="Total batch size for test.")
     parser.add_argument("--learning_rate",
@@ -373,7 +464,7 @@ def main():
                         type=float,
                         help="The initial learning rate for Adam.")
     parser.add_argument("--num_train_epochs",
-                        default=2.0,
+                        default=5.0,
                         type=float,
                         help="Total number of training epochs to perform.")
     parser.add_argument("--warmup_proportion",
@@ -407,11 +498,13 @@ def main():
     args = parser.parse_args()
 
     processors = {
-        "task_a": taskA_Processor
+        "task_a": taskA_Processor,
+        "trac_1": trac1_Processor
     }
 
     output_modes = {
-        "task_a": "classification"
+        "task_a": "classification",
+        "trac_1": "classification"
     }
 
     if args.local_rank == -1 or args.no_cuda:
@@ -600,6 +693,12 @@ def main():
     model.to(device)
 
     if args.do_eval and (args.local_rank == -1 or torch.distributed.get_rank() == 0):
+        config = BertConfig.from_json_file(os.path.join(args.output_dir, "bert_config.json"))
+        model = BertForSequenceClassification(config, num_labels=num_labels)
+        model.load_state_dict(torch.load(os.path.join(args.output_dir, "pytorch_model.bin")))
+        
+        model.to(device)
+
         eval_examples = processor.get_dev_examples(args.data_dir)
         eval_features = convert_examples_to_features(
             eval_examples, label_list, args.max_seq_length, tokenizer, output_mode)
@@ -663,6 +762,7 @@ def main():
         result['eval_loss'] = eval_loss
         result['global_step'] = global_step
         result['loss'] = loss
+        result['model_spec'] = args
 
         output_eval_file = os.path.join(args.output_dir, "eval_results.txt")
         with open(output_eval_file, "w") as writer:
@@ -672,7 +772,17 @@ def main():
                 writer.write("%s = %s\n" % (key, str(result[key])))
 
     if args.do_test and (args.local_rank == -1 or torch.distributed.get_rank() == 0):
-        test_examples = processor.get_test_examples(args.data_dir)
+        config = BertConfig.from_json_file(os.path.join(args.output_dir, "bert_config.json"))
+        model = BertForSequenceClassification(config, num_labels=num_labels)
+        model.load_state_dict(torch.load(os.path.join(args.output_dir, "pytorch_model.bin")))
+        
+        model.to(device)
+
+        if args.task_name == "task_a":
+            test_examples = processor.get_test_examples(args.data_dir)
+        if args.task_name == "trac_1":
+            test_examples = processor.get_test_examples(args.data_dir, args.test_src)
+
         test_features = convert_examples_to_features(
             test_examples, label_list, args.max_seq_length, tokenizer, output_mode)
 
@@ -712,6 +822,7 @@ def main():
                     preds[0], logits.detach().cpu().numpy(), axis=0)
 
         preds = preds[0]
+ 
         if output_mode == "classification":
             preds = np.argmax(preds, axis=1)
         elif output_mode == "regression":
@@ -719,11 +830,14 @@ def main():
 
         df_ids = pd.DataFrame(ids)
         df_preds = pd.DataFrame(preds)
-        df_preds = df_preds.replace([0, 1], ["NOT", "OFF"])
-
-
+        
+        if args.task_name == "task_a":
+            df_preds = df_preds.replace([0, 1], ["NOT", "OFF"])
+        if args.task_name == "trac_1":
+            df_preds = df_preds.replace([0, 1, 2], ["NAG", "CAG", "OAG"])
+        
         df_result = pd.concat([df_ids, df_preds], axis=1)
-        df_result.to_csv(os.path.join(args.output_dir, "test_results_A.csv"), header=False, index=False)
+        df_result.to_csv(os.path.join(args.output_dir, "test_results.csv"), header=False, index=False)
         logger.info("***** Prediction for Test data is completed *****")
         
 if __name__ == "__main__":

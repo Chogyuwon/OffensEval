@@ -19,7 +19,7 @@ if __name__ == "__main__":
     print("Train_data_size :", len(train_data))
     print("Dev_data_size :", len(dev_data))
     
-    save_data("./datasets/OffensEval_train.tsv", train_data)
-    save_data("./datasets/OffensEval_dev.tsv", dev_data)
+    save_data("./datasets/OLIDv1.0/OffensEval_train.tsv", train_data)
+    save_data("./datasets/OLIDv1.0/OffensEval_dev.tsv", dev_data)
     
     print("Make Dev set completed !")
