@@ -15,10 +15,11 @@ SemEval_2019_Task6
 4. Hate Speech on Twitter: A Pragmatic Approach to Collect Hateful and Offensive Expressions and Perform Hate Speech Detection  [[Link]](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8292838)
 
 # Related Datasets
-|Dataset|Source| Link |
-|---|---|---|
-|Toxic Comment Classification Challenge|Kaggle|[[Link]](https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge/data)|
-|hate-speech-and-offensive-language|github|[[Link]](https://github.com/t-davidson/hate-speech-and-offensive-language/tree/master/data)|
-|TRAC-1-Shared Task|Google Sites|[[Link]](https://sites.google.com/view/trac1/shared-task)|
-|Hate Speech Identification|crowdflower|[[Link]](https://data.world/crowdflower/hate-speech-identification)|
-|Hate Speech|github|[[Link]](https://github.com/ZeerakW/hatespeech)|
+|idx|Dataset|Source| Link |
+|---|---|---|---|
+|1|Toxic Comment Classification Challenge|Kaggle|[[Link]](https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge/data)|
+|2|hate-speech-and-offensive-language|github|[[Link]](https://github.com/t-davidson/hate-speech-and-offensive-language/tree/master/data)|
+|3|TRAC-1-Shared Task|Google Sites|[[Link]](https://sites.google.com/view/trac1/shared-task)|
+|4|Hate Speech Identification|crowdflower|[[Link]](https://data.world/crowdflower/hate-speech-identification)|
+|5|Hate Speech|github|[[Link]](https://github.com/ZeerakW/hatespeech)|
+|6|Hate Speech and Offensive Language|crowdflower|[[Link]](https://data.world/thomasrdavidson/hate-speech-and-offensive-language)|
