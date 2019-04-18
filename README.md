@@ -21,3 +21,4 @@ SemEval_2019_Task6
 |hate-speech-and-offensive-language|github|[[Link]](https://github.com/t-davidson/hate-speech-and-offensive-language/tree/master/data)|
 |TRAC-1-Shared Task|Google Sites|[[Link]](https://sites.google.com/view/trac1/shared-task)|
 |Hate Speech Identification|crowdflower|[[Link]](https://data.world/crowdflower/hate-speech-identification)|
+|Hate Speech|github|[[Link]](https://github.com/ZeerakW/hatespeech)|
